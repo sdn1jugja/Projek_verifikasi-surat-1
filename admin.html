@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rekap Verifikasi Surat</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4>📄 Rekap Verifikasi Surat</h4>
+      <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover" id="tabelSurat">
+        <thead class="table-dark">
+          <tr>
+            <th>No</th>
+            <th>Nomor Surat</th>
+            <th>Tanggal</th>
+            <th>Penandatangan</th>
+            <th>Jabatan</th>
+            <th>Perihal</th>
+            <th>Unit Kerja</th>
+            <th>PDF</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "login.html";
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedIn");
+      window.location.href = "login.html";
+    }
+
+    // Ganti URL Apps Script Anda di sini
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbw9pf6hXIRbeM6EXD4DF9ArwY2AxdZYli92wgvotS4JN4Ry8yeODabxHojkFhJYsl9hQA/exec?rekap=1";
+
+    fetch(SHEET_URL)
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector("#tabelSurat tbody");
+        if (!Array.isArray(data)) {
+          tbody.innerHTML = "<tr><td colspan='8' class='text-danger'>Data tidak tersedia.</td></tr>";
+          return;
+        }
+
+        data.forEach((row, i) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${i + 1}</td>
+            <td>${row.nomor}</td>
+            <td>${formatTanggal(row.tanggal)}</td>
+            <td>${row.penandatangan}</td>
+            <td>${row.jabatan}</td>
+            <td>${row.perihal}</td>
+            <td>${row.unit_kerja}</td>
+            <td>${row.pdf ? `<a href="${row.pdf}" target="_blank">Lihat</a>` : "-"}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        document.querySelector("#tabelSurat tbody").innerHTML = "<tr><td colspan='8' class='text-danger'>Gagal memuat data.</td></tr>";
+        console.error(err);
+      });
+
+    function formatTanggal(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+  </script>
+</body>
+</html>

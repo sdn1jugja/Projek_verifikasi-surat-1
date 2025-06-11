@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verifikasi Surat Dinas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <style>
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #hasilVerifikasi, #hasilVerifikasi * {
+        visibility: visible;
+      }
+      #hasilVerifikasi {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+      }
+      #btnPrint {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container mt-4">
+    <div class="text-center mb-4">
+      <img src="https://iili.io/F94ELXI.jpg" alt="Logo Instansi" width="80"/>
+      <h5 class="mt-2">Verifikasi Surat / Dokumen Dinas</h5>
+      <p class="text-muted">SD NEGERI 1 JUGLANGAN</p>
+    </div>
+
+    <div class="card shadow rounded">
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="nomorSurat" class="form-label">Masukkan Nomor Surat:</label>
+          <input type="text" class="form-control" id="nomorSurat" placeholder="Contoh: 400.3.11/058/431.301.2.816/2025" />
+        </div>
+        <button class="btn btn-success" onclick="verifikasiSurat()">Verifikasi</button>
+        <hr />
+        <div id="hasilVerifikasi" class="mt-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function verifikasiSurat() {
+      const nomor = document.getElementById("nomorSurat").value.trim();
+      const hasilDiv = document.getElementById("hasilVerifikasi");
+      hasilDiv.innerHTML = "Memproses...";
+
+      if (!nomor) {
+        hasilDiv.innerHTML = `<div class="alert alert-warning">Masukkan nomor surat terlebih dahulu.</div>`;
+        return;
+      }
+
+      // GANTI URL DIBAWAH INI DENGAN URL APPS SCRIPT ANDA
+      const url = `https://script.google.com/macros/s/AKfycbw9pf6hXIRbeM6EXD4DF9ArwY2AxdZYli92wgvotS4JN4Ry8yeODabxHojkFhJYsl9hQA/exec?nomor=${encodeURIComponent(nomor)}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.error) {
+          hasilDiv.innerHTML = `<div class="alert alert-danger">❌ ${data.error}</div>`;
+        } else {
+          hasilDiv.innerHTML = `
+            <div class="card border-success">
+              <div class="card-body">
+                <h5 class="card-title text-success">✅ Surat Terverifikasi</h5>
+                <p><strong>Nomor:</strong> ${data.nomor}</p>
+                <p><strong>Tanggal:</strong> ${data.tanggal}</p>
+                <p><strong>Penandatangan:</strong> ${data.penandatangan}</p>
+                <p><strong>Jabatan:</strong> ${data.jabatan}</p>
+                <p><strong>Perihal:</strong> ${data.perihal}</p>
+                <p><strong>Unit Kerja:</strong> ${data.unit_kerja}</p>
+                ${data.pdf ? `<p><a href="${data.pdf}" class="btn btn-sm btn-primary" target="_blank">Lihat Dokumen PDF</a></p>` : ""}
+                <div class="my-3" id="qrcode"></div>
+                <button class="btn btn-outline-secondary" id="btnPrint" onclick="window.print()">🖨️ Cetak Bukti Verifikasi</button>
+              </div>
+            </div>
+          `;
+
+          // QR CODE
+          const qrDiv = document.getElementById("qrcode");
+          qrDiv.innerHTML = ""; // reset
+          const qr = new QRCode(qrDiv, {
+            text: `${window.location.href.split("?")[0]}?nomor=${encodeURIComponent(nomor)}`,
+            width: 128,
+            height: 128
+          });
+        }
+      } catch (err) {
+        hasilDiv.innerHTML = `<div class="alert alert-danger">Terjadi kesalahan saat mengambil data.</div>`;
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
